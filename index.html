@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plataforma Integrada de Robótica - 6to Grado</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --secondary: #0d9488;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #1e293b;
+    }
+
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+
+    .main-layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; max-width: 1350px; margin: 0 auto; }
+    @media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; } }
+
+    header { background: linear-gradient(135deg, #1d4ed8, #2563eb); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; grid-column: 1 / -1; }
+    .card { background: var(--card); border-radius: 12px; padding: 22px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+
+    .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+    .nav-tab-btn { background: #e2e8f0; color: #475569; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+    .nav-tab-btn.active { background: var(--primary); color: white; }
+
+    .theory-box { background: #eff6ff; border-left: 6px solid var(--primary); padding: 20px; border-radius: 8px; margin-bottom: 20px; line-height: 1.6; }
+    .theory-box h3 { margin-top: 0; color: var(--primary); }
+    .theory-box h4 { margin: 15px 0 5px 0; color: #1e40af; }
+
+    .progress-bar-bg { background: #e2e8f0; border-radius: 10px; height: 22px; width: 100%; overflow: hidden; margin: 10px 0; }
+    .progress-bar-fill { background: var(--success); height: 100%; width: 0%; transition: width 0.3s ease; }
+
+    .stats-bar { display: flex; justify-content: space-between; background: #e2e8f0; padding: 10px 16px; border-radius: 8px; font-weight: bold; margin-bottom: 15px; font-size: 14px; }
+
+    button { background: var(--primary); color: white; border: none; padding: 12px 20px; font-size: 15px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-weight: 600; }
+    button:hover { opacity: 0.95; }
+
+    .feedback { font-weight: bold; margin-top: 12px; padding: 12px; border-radius: 6px; display: none; }
+    .feedback.error { background: #fee2e2; color: var(--danger); border: 1px solid #fca5a5; display: block; }
+    .feedback.success { background: #dcfce7; color: var(--success); border: 1px solid #86efac; display: block; }
+
+    /* Sopa de Letras 15x15 */
+    .wordsearch-container { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+    .wordsearch-grid { display: grid; grid-template-columns: repeat(15, 30px); gap: 3px; justify-content: center; margin: 10px 0; user-select: none; }
+    .ws-cell { width: 30px; height: 30px; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; border-radius: 4px; background: #fff; font-size: 14px; transition: 0.1s; }
+    .ws-cell.selected { background: #3b82f6; color: white; }
+    .ws-cell.found { background: #22c55e !important; color: white !important; }
+
+    .word-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; }
+    .word-badge { padding: 6px 12px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 20px; font-weight: bold; font-size: 13px; color: #64748b; }
+    .word-badge.found { background: #dcfce7; color: #15803d; border-color: #86efac; text-decoration: line-through; }
+
+    .options-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
+    .option-btn { background: #f8fafc; color: var(--text); border: 2px solid #cbd5e1; text-align: left; padding: 14px; border-radius: 8px; font-size: 15px; cursor: pointer; transition: 0.2s; }
+    .option-btn:hover { background: #eff6ff; border-color: var(--primary); }
+
+    .draggable-list { list-style: none; padding: 0; }
+    .draggable-item { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 12px; margin-bottom: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+
+    .math-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center; font-size: 16px; font-weight: bold; }
+    .math-input { width: 70px; padding: 8px; font-size: 16px; text-align: center; border: 2px solid #cbd5e1; border-radius: 6px; margin-top: 4px; }
+
+    /* Estilos del Sidebar / Ranking */
+    .ranking-list { list-style: none; padding: 0; margin: 0; }
+    .ranking-item { display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+    .ranking-item:nth-child(1) { font-weight: bold; color: #b45309; background: #fef3c7; border-radius: 4px; }
+    .ranking-item:nth-child(2) { font-weight: bold; color: #475569; background: #f1f5f9; border-radius: 4px; }
+    .ranking-item:nth-child(3) { font-weight: bold; color: #78350f; background: #ffedd5; border-radius: 4px; }
+
+    /* Juego Laberinto */
+    .maze-grid { display: grid; grid-template-columns: repeat(5, 45px); gap: 5px; justify-content: center; margin: 15px 0; }
+    .maze-cell { width: 45px; height: 45px; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background: #fff; font-size: 20px; }
+    .maze-cell.wall { background: #334155; }
+    .maze-cell.target { background: #dcfce7; }
+    .command-list { background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; min-height: 40px; border-radius: 6px; margin-bottom: 10px; font-size: 13px; font-weight: bold; }
+
+    .btn-nav-group { display: flex; justify-content: space-between; margin-top: 20px; }
+    .btn-back { background: #64748b; }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="main-layout">
+  <header>
+    <h1>🤖 Desafío Completo de Robótica y Algoritmos</h1>
+    <p>Lecciones 35, 36 y 37 — 6to Grado Primaria</p>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main id="main-content">
+    
+    <!-- REGISTRO Y SELECCIÓN DE ALUMNO -->
+    <div id="section-register" class="card">
+      <h3>📋 Registro del Alumno</h3>
+      <p>Selecciona tu nombre completo para comenzar:</p>
+      <div style="margin-bottom: 15px;">
+        <select id="student-name" style="width: 100%; padding: 12px; font-size: 15px; border-radius: 6px; border: 2px solid #cbd5e1;">
+          <option value="">-- Selecciona tu nombre de la lista --</option>
+          <option value="MAXIMILIANO ALEJO ROMERO">ALEJO ROMERO, MAXIMILIANO</option>
+          <option value="ELENA SOFIA DE LARA GAMAS">DE LARA GAMAS, ELENA SOFIA</option>
+          <option value="NATALIA GALLEGOS VILLA">GALLEGOS VILLA, NATALIA</option>
+          <option value="ROMINA NATALIA GUZMAN SANCHEZ">GUZMAN SANCHEZ, ROMINA NATALIA</option>
+          <option value="KARLA DANIELA HERNANDEZCUEVAS">HERNANDEZ CUEVAS, KARLA DANIELA</option>
+          <option value="EIMY VALERIA HERNANDEZ NORIEGA">HERNANDEZ NORIEGA, EIMY VALERIA</option>
+          <option value="GENESIS HERNANDEZ ULLOA">HERNANDEZ ULLOA, GENESIS</option>
+          <option value="ANAITE HERNANDEZ VARGAS">HERNANDEZ VARGAS, ANAITE</option>
+          <option value="PAULA ELENA JUAREZ BRITO">JUAREZ BRITO, PAULA ELENA</option>
+          <option value="DIEGO IVAN MORALES BADILLO">MORALES BADILLO, DIEGO IVAN</option>
+          <option value="LUIS OCTAVIO OZUNA QUIROZ">OZUNA QUIROZ, LUIS OCTAVIO</option>
+          <option value="ANDRE PULIDO HERNANDEZ">PULIDO HERNANDEZ, ANDRE</option>
+          <option value="ERIK ALEXANDER RAMOS SARRACINO">RAMOS SARRACINO, ERIK ALEXANDER</option>
+          <option value="IKER RAMOS TARACENAS">RAMOS TARACENAS, IKER</option>
+          <option value="GISELLE ROMERO HERNÁNDEZ">ROMERO HERNÁNDEZ, GISELLE</option>
+          <option value="TAMARA RUEDA PALANCARES">RUEDA PALANCARES, TAMARA</option>
+          <option value="GIBRAN SANCHEZ CISNEROS">SANCHEZ CISNEROS, GIBRAN</option>
+          <option value="MONTSERRAT SOSA RAMIREZ">SOSA RAMIREZ, MONTSERRAT</option>
+          <option value="GABRIEL EDUARDO TRUJILLO HERNANDEZ">TRUJILLO HERNANDEZ, GABRIEL EDUARDO</option>
+          <option value="VANIA NAOMY VASCONCELOS PERALTA">VASCONCELOS PERALTA, VANIA NAOMY</option>
+          <option value="FATIMA MONSERRAT VENTURA YSIDRO">VENTURA YSIDRO, FATIMA MONSERRAT</option>
+        </select>
+      </div>
+      <button onclick="startApp()">Comenzar Lecciones 🚀</button>
+    </div>
+
+    <!-- CONTENEDOR DE ETAPAS -->
+    <div id="section-game" class="hidden">
+      
+      <div class="stats-bar">
+        <span>👤 <span id="disp-name"></span></span>
+        <span>⏱️ <span id="timer">00:00</span></span>
+        <span>⭐ Puntos: <span id="score">0</span></span>
+        <span>❌ Errores: <span id="attempts">0</span></span>
+      </div>
+
+      <div>
+        <small><b>Progreso General:</b></small>
+        <div class="progress-bar-bg">
+          <div id="progress-bar" class="progress-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- NAVEGACIÓN POR PESTAÑAS DE TEMAS -->
+      <div class="nav-tabs" id="nav-tabs-container">
+        <button class="nav-tab-btn active" onclick="switchTheme(1)">Tema 1: mBlock</button>
+        <button class="nav-tab-btn" onclick="switchTheme(2)">Tema 2: Sensor RGB</button>
+        <button class="nav-tab-btn" onclick="switchTheme(3)">Tema 3: Algoritmos</button>
+        <button class="nav-tab-btn" onclick="switchTheme(4)">Juego Final</button>
+      </div>
+
+      <!-- ================= TEMA 1 ================= -->
+      <div id="theme-1-container">
+        <!-- TEORÍA TEMA 1 -->
+        <div id="t1-theory" class="card">
+          <div class="theory-box">
+            <h3>📘 Lección 35: Entorno y Bloques de mBlock</h3>
+            <p>Programar en mBlock es como jugar con bloques de construcción digitales. En lugar de escribir código difícil, juntas piezas de colores donde cada color tiene un trabajo específico:</p>
+            <h4>🟡 Eventos (Amarillo)</h4>
+            <p>Son los disparadores que le dicen al robot <b>cuándo empezar</b> (ejemplo: <i>"Al presionar la bandera verde"</i>).</p>
+            <h4>🔵 Acción y Movimiento (Azul)</h4>
+            <p>Le indican al robot qué hacer físicamente, como mover motores a una velocidad o encender luces LED.</p>
+            <h4>🟠 Control (Naranja)</h4>
+            <p>Sirven para repetir órdenes (como el bucle <i>"Por siempre"</i>) o tomar decisiones lógicas (<i>"Si... entonces"</i>).</p>
+            <h4>🩵 Sensores (Celeste)</h4>
+            <p>Le permiten al robot sentir el mundo exterior, midiendo distancias o detectando colores e iluminación.</p>
+          </div>
+          <button onclick="showT1Activity()">Ir a las Actividades del Tema 1 ✏️</button>
+        </div>
+
+        <!-- ACTIVIDADES TEMA 1 -->
+        <div id="t1-activities" class="card hidden">
+          <button class="btn-back" onclick="showT1Theory()">⬅️ Volver a la Teoría</button>
+          <hr style="margin: 15px 0;">
+
+          <h3>✏️ Cuestionario Tema 1: Entorno mBlock (5 Preguntas)</h3>
+          
+          <div id="q1-container">
+            <p><b>Pregunta 1:</b> ¿Qué color tienen los bloques que inician un programa (ej: "Al presionar bandera verde")?</p>
+            <div class="options-grid">
+              <button class="option-btn" onclick="answerQ(1, 1, false)">A) Azul (Movimiento)</button>
+              <button class="option-btn" onclick="answerQ(1, 1, true)">B) Amarillo (Eventos)</button>
+              <button class="option-btn" onclick="answerQ(1, 1, false)">C) Naranja (Control)</button>
+            </div>
+          </div>
+
+          <div id="q2-container" class="hidden">
+            <p><b>Pregunta 2:</b> Si quieres que tu robot repita una acción sin detenerse jamás, ¿qué bloque usas?</p>
+            <div class="options-grid">
+              <button class="option-btn" onclick="answerQ(1, 2, true)">A) Por siempre (Control)</button>
+              <button class="option-btn" onclick="answerQ(1, 2, false)">B) Al presionar tecla espacio</button>
+              <button class="option-btn" onclick="answerQ(1, 2, false)">C) Mover 10 pasos</button>
+            </div>
+          </div>
+
+          <div id="q3-container" class="hidden">
+            <p><b>Pregunta 3:</b> ¿Para qué sirven los bloques de color celeste en mBlock?</p>
+            <div class="options-grid">
+              <button class="option-btn" onclick="answerQ(1, 3, false)">A) Para cambiar la música del robot</button>
+              <button class="option-btn" onclick="answerQ(1, 3, true)">B) Para leer datos de los sensores</button>
+              <button class="option-btn" onclick="answerQ(1, 3, false)">C) Para apagar la computadora</button>
+            </div>
+          </div>
+
+          <div id="q4-container" class="hidden">
+            <p><b>Pregunta 4:</b> ¿Por qué usamos mBlock en lugar de escribir código con letras difíciles?</p>
+            <div class="options-grid">
+              <button class="option-btn" onclick="answerQ(1, 4, true)">A) Porque los bloques evitan errores de escritura y encajan fácilmente</button>
+              <button class="option-btn" onclick="answerQ(1, 4, false)">B) Porque mBlock solo funciona en robots de juguete</button>
+              <button class="option-btn" onclick="answerQ(1, 4, false)">C) Porque no se pueden mover los motores de otra forma</button>
+            </div>
+          </div>
+
+          <div id="q5-container" class="hidden">
+            <p><b>Pregunta 5:</b> ¿Qué bloque usas para encender las luces LED del mBot?</p>
+            <div class="options-grid">
+              <button class="option-btn" onclick="answerQ(1, 5, false)">A) Bloque de Evento</button>
+              <button class="option-btn" onclick="answerQ(1, 5, true)">B) Bloque de Acción / Movimiento</button>
+              <button class="option-btn" onclick="answerQ(1, 5, false)">C) Bloque de Control</button>
+            </div>
+          </div>
+
+          <!-- SOPA DE LETRAS 15X15 -->
+          <div id="t1-ws-container" class="hidden" style="margin-top: 25px;">
+            <hr>
+            <h3>🔤 Actividad Extra: Sopa de Letras Gigante (15x15)</h3>
+            <p>Encuentra las palabras arrastrando o haciendo clic sobre las letras. Busca: <b>EVENTOS</b>, <b>MOTORES</b>, <b>SENSORES</b>, <b>BLOQUES</b> y <b>MBLOCK</b>.</p>
+            
+            <div class="word-list" id="word-list-display">
+              <span class="word-badge" id="badge-EVENTOS">EVENTOS</span>
+              <span class="word-badge" id="badge-MOTORES">MOTORES</span>
+              <span class="word-badge" id="badge-SENSORES">SENSORES</span>
+              <span class="word-badge" id="badge-BLOQUES">BLOQUES</span>
+              <span class="word-badge" id="badge-MBLOCK">MBLOCK</span>
+            </div>
+
+            <div class="wordsearch-container">
+              <div class="wordsearch-grid" id="ws-grid-15"></div>
+            </div>
+
+            <button onclick="checkT1WS()">Comprobar Palabras Encontradas</button>
+          </div>
+
+          <div id="fb-t1" class="feedback"></div>
+        </div>
+      </div>
+
+      <!-- ================= TEMA 2 ================= -->
+      <div id="theme-2-container" class="hidden">
+        <!-- TEORÍA TEMA 2 -->
+        <div id="t2-theory" class="card">
+          <div class="theory-box">
+            <h3>📘 Lección 36: El Sensor RGB Seguidor de Línea</h3>
+            <p>Un robot funciona mediante un ciclo de 3 pasos: <b>Entrada (Sensores) ➔ Proceso (Cerebro) ➔ Salida (Actuadores / Motores)</b>.</p>
+            <h4>¿Cómo funciona la luz en el Sensor Seguidor de Línea?</h4>
+            <p>El sensor emite un rayo de luz hacia el suelo y mide cuánta luz regresa reflejada:</p>
+            <ul>
+              <li><b>Superficie Blanca:</b> Refleja casi toda la luz. El sensor la interpreta como "Brillante".</li>
+              <li><b>Línea Negra:</b> Absorbe la luz y no refleja nada. El sensor la interpreta como "Oscura".</li>
+            </ul>
+            <h4>Toma de Decisiones:</h4>
+            <ul>
+              <li><b>Si el sensor IZQUIERDO ve negro:</b> El robot se está saliendo hacia la derecha. ¡Debe girar a la <b>IZQUIERDA</b>!</li>
+              <li><b>Si el sensor DERECHO ve negro:</b> El robot se está saliendo hacia la izquierda. ¡Debe girar a la <b>DERECHA</b>!</li>
+              <li><b>Si ambos ven blanco:</b> El robot camina derecho a velocidad constante.</li>
+            </ul>
+          </div>
+          <button onclick="showT2Activity()">Ir a las Actividades del Tema 2 ✏️</button>
+        </div>
+
+        <!-- ACTIVIDADES TEMA 2 -->
+        <div id="t2-activities" class="card hidden">
+          <button class="btn-back" onclick="showT2Theory()">⬅️ Volver a la Teoría</button>
+          <hr style="margin: 15px 0;">
+
+          <h3>✏️ Cuestionario Tema 2: Sensores y Física de la Luz (5 Preguntas)</h3>
+          
+          <div id="t2-q1-container">
+            <p><b>Pregunta 1:</b> ¿Por qué el sensor seguidor de línea puede ver la cinta negra?</p>
+            <div class="options-grid">
+              <button class="option-btn" onclick="answerQ(2, 1, false)">A) Porque el color negro emite calor</button>
+              <button class="option-btn" onclick="answerQ(2, 1, true)">B) Porque la cinta negra absorbe la luz y no refleja nada</button>
+              <button class="option-btn" onclick="answerQ(2, 1, false)">C) Porque el suelo blanco hace sonar una alarma</button>
+            </div>
+          </div>
+
+          <div id="t2-q2-container" class="hidden">
+            <p><b>Pregunta 2:</b> ¿Qué paso del ciclo del robot realizan los motores?</p>
+            <div class="options-grid">
+              <button class="option-btn" onclick="answerQ(2, 2, false)">A) Entrada (Lectura)</button>
+              <button class="option-btn" onclick="answerQ(2, 2, false)">B) Procesamiento (Cerebro)</button>
+              <button class="option-btn" onclick="answerQ(2, 2, true)">C) Salida (Actuación)</button>
+            </div>
+          </div>
+
+          <div id="t2-q3-container" class="hidden">
+            <p><b>Pregunta 3:</b> El robot va avanzando y su <b>sensor DERECHO toca la línea negra</b>. ¿Hacia dónde gira?</p>
+            <div class="options-grid">
+              <button class="option-btn" onclick="answerQ(2, 3, false)">A) Girar a la Izquierda</button>
+              <button class="option-btn" onclick="answerQ(2, 3, true)">B) Girar a la Derecha</button>
+              <button class="option-btn" onclick="answerQ(2, 3, false)">C) Dar marcha atrás</button>
+            </div>
+          </div>
+
+          <div id="t2-q4-container" class="hidden">
+            <p><b>Pregunta 4:</b> Si ambos sensores (izquierdo y derecho) están sobre la pista blanca, ¿qué hace el robot?</p>
+            <div class="options-grid">
+              <button class="option-btn" onclick="answerQ(2, 4, true)">A) Avanzar recto de frente</button>
+              <button class="option-btn" onclick="answerQ(2, 4, false)">B) Frenar inmediatamente</button>
+              <button class="option-btn" onclick="answerQ(2, 4, false)">C) Girar en círculos</button>
+            </div>
+          </div>
+
+          <div id="t2-q5-container" class="hidden">
+            <p><b>Pregunta 5:</b> ¿Qué componente del robot equivale a los sentidos humanos?</p>
+            <div class="options-grid">
+              <button class="option-btn" onclick="answerQ(2, 5, false)">A) Los motores</button>
+              <button class="option-btn" onclick="answerQ(2, 5, true)">B) Los sensores</button>
+              <button class="option-btn" onclick="answerQ(2, 5, false)">C) Las ruedas</button>
+            </div>
+          </div>
+
+          <div id="fb-t2" class="feedback"></div>
+        </div>
+      </div>
+
+      <!-- ================= TEMA 3 ================= -->
+      <div id="theme-3-container" class="hidden">
+        <!-- TEORÍA TEMA 3 -->
+        <div id="t3-theory" class="card">
+          <div class="theory-box">
+            <h3>📘 Lección 37: Algoritmos y Control en Bucle</h3>
+            <p>Un <b>algoritmo</b> es una lista ordenada de pasos sencillos para resolver un problema.</p>
+            <p>Para seguir una línea, el programa necesita evaluar todo el tiempo si se sale del camino. Esto se logra metiendo los bloques condicionales (<i>Si... entonces</i>) dentro de un bloque <b>Por siempre</b>.</p>
+            <p>Además, calibrar la velocidad de los motores requiere un buen cálculo de potencia matemática para asegurar giros suaves.</p>
+          </div>
+          <button onclick="showT3Activity()">Ir a las Actividades del Tema 3 ✏️</button>
+        </div>
+
+        <!-- ACTIVIDADES TEMA 3 -->
+        <div id="t3-activities" class="card hidden">
+          <button class="btn-back" onclick="showT3Theory()">⬅️ Volver a la Teoría</button>
+          <hr style="margin: 15px 0;">
+
+          <h3>✏️ Cuestionario Tema 3: Algoritmos (5 Preguntas)</h3>
+          
+          <div id="t3-q1-container">
+            <p><b>Pregunta 1:</b> ¿Qué es un algoritmo en robótica?</p>
+            <div class="options-grid">
+              <button class="option-btn" onclick="answerQ(3, 1, true)">A) Una secuencia ordenada de pasos lógicos</button>
+              <button class="option-btn" onclick="optionBtnFail(this)">B) Un tipo de motor de gran potencia</button>
+              <button class="option-btn" onclick="optionBtnFail(this)">C) Una pieza de plástico del robot</button>
+            </div>
+          </div>
+
+          <div id="t3-q2-container" class="hidden">
+            <p><b>Pregunta 2:</b> ¿Por qué usamos el bloque "Por siempre" en el seguidor de línea?</p>
+            <div class="options-grid">
+              <button class="option-btn" onclick="answerQ(3, 2, true)">A) Para revisar los sensores sin detenerse jamás</button>
+              <button class="option-btn" onclick="optionBtnFail(this)">B) Para que la batería dure más tiempo</button>
+              <button class="option-btn" onclick="optionBtnFail(this)">C) Para que el robot ande más despacio</button>
+            </div>
+          </div>
+
+          <div id="t3-q3-container" class="hidden">
+            <p><b>Pregunta 3:</b> Ordena el algoritmo correcto para el mBot seguidor de línea:</p>
+            <ul class="draggable-list" id="algo-list">
+              <li class="draggable-item" data-id="2"><span>2. Poner bucle continuo "Por siempre"</span> <div><button onclick="moveUp(this)">⬆️</button> <button onclick="moveDown(this)">⬇️</button></div></li>
+              <li class="draggable-item" data-id="1"><span>1. Al presionar bandera verde</span> <div><button onclick="moveUp(this)">⬆️</button> <button onclick="moveDown(this)">⬇️</button></div></li>
+              <li class="draggable-item" data-id="3"><span>3. Evaluar condicional de sensores y corregir giro</span> <div><button onclick="moveUp(this)">⬆️</button> <button onclick="moveDown(this)">⬇️</button></div></li>
+            </ul>
+            <button onclick="checkAlgoOrder()">Comprobar Orden del Algoritmo</button>
+          </div>
+
+          <div id="t3-q4-container" class="hidden">
+            <p><b>Pregunta 4:</b> Calibración de Motores (Multiplicaciones):</p>
+            <div class="math-grid">
+              <div>8 x 7 = <br><input type="number" id="m1" class="math-input"></div>
+              <div>9 x 6 = <br><input type="number" id="m2" class="math-input"></div>
+              <div>7 x 4 = <br><input type="number" id="m3" class="math-input"></div>
+            </div>
+            <br>
+            <button onclick="checkMath()">Validar Calibración</button>
+          </div>
+
+          <div id="t3-q5-container" class="hidden">
+            <p><b>Pregunta 5 (Acertijo Lógico):</b> Un robot posee esta orden: <i>"Si hay oscuridad total, enciende luces rojas y frena."</i> Si entra a un túnel sin luz, ¿qué hará?</p>
+            <div class="options-grid">
+              <button class="option-btn" onclick="answerQ(3, 5, false)">A) Aumentar la velocidad</button>
+              <button class="option-btn" onclick="answerQ(3, 5, true)">B) Encender luces rojas y frenar</button>
+              <button class="option-btn" onclick="answerQ(3, 5, false)">C) Girar a la derecha</button>
+            </div>
+          </div>
+
+          <div id="fb-t3" class="feedback"></div>
+        </div>
+      </div>
+
+      <!-- ================= TEMA 4: JUEGO FINAL ================= -->
+      <div id="theme-4-container" class="hidden">
+        <div class="card">
+          <div class="theory-box">
+            <h3>🎮 Desafío Individual: "El Laberinto del Algoritmo"</h3>
+            <p>Crea la secuencia perfecta de comandos para guiar al robot 🤖 hasta la meta 🏁 sin chocar con los bloques oscuros.</p>
+          </div>
+
+          <div class="maze-grid" id="maze-board"></div>
+
+          <p><b>Secuencia del Algoritmo:</b></p>
+          <div class="command-list" id="cmd-display">Inicio -> </div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button onclick="addCmd('DER')">➡️ Derecha</button>
+            <button onclick="addCmd('ABA')">⬇️ Abajo</button>
+            <button onclick="addCmd('IZQ')">⬅️ Izquierda</button>
+            <button onclick="addCmd('ARR')">⬆️ Arriba</button>
+            <button style="background: #dc2626;" onclick="clearCmd()">🧹 Borrar</button>
+          </div>
+          <br>
+          <button style="background: var(--success); width: 100%;" onclick="runMaze()">▶️ Ejecutar Algoritmo Final</button>
+          <div id="fb-maze" class="feedback"></div>
+        </div>
+      </div>
+
+      <!-- PANTALLA DE RESULTADOS FINAL -->
+      <div id="stage-final" class="card hidden" style="text-align: center;">
+        <h2>🎉 ¡Felicidades! Completaste todo el programa</h2>
+        <p>Tus puntos y tiempo se enviaron con éxito a la lista oficial de 6to Grado.</p>
+        <div style="font-size: 26px; font-weight: bold; margin: 20px 0;">
+          Puntaje Obtenido: <span id="final-score" style="color: var(--primary);">0</span> pts<br>
+          Tiempo Empleado: <span id="final-time" style="color: var(--secondary);">0</span>
+        </div>
+        <button onclick="location.reload()">Registrar Nuevo Alumno 🔄</button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- PANEL LATERAL: RANKING Y TABLA DE POSICIONES -->
+  <aside>
+    <div class="card">
+      <h3>🏆 Tabla de Posiciones</h3>
+      <small>Top 10 en tiempo real (Google Sheets):</small>
+      <br><br>
+      <ul class="ranking-list" id="ranking-container">
+        <li class="ranking-item">Cargando ranking...</li>
+      </ul>
+      <br>
+      <button style="width: 100%; font-size: 13px;" onclick="fetchRanking()">🔄 Actualizar Tabla</button>
+    </div>
+  </aside>
+
+</div>
+
+<script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQ_REEMPLAZA_CON_TU_URL_DE_DESPLIEGUE/exec";
+
+  let studentName = "";
+  const studentProfile = "6to Grado - Primaria";
+  let score = 0;
+  let attempts = 0;
+  let progress = 0;
+  let timerInterval = null;
+  let seconds = 0;
+  let currentTheme = 1;
+
+  // SOPA DE LETRAS 15x15 (TEMA 1)
+  const gridLetters15 = [
+    ['E','V','E','N','T','O','S','A','B','C','D','E','F','G','H'],
+    ['M','O','T','O','R','E','S','X','Y','Z','W','K','L','M','N'],
+    ['S','E','N','S','O','R','E','S','P','Q','R','S','T','U','V'],
+    ['B','L','O','Q','U','E','S','Z','A','B','C','D','E','F','G'],
+    ['M','B','L','O','C','K','H','I','J','K','L','M','N','O','P'],
+    ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'],
+    ['P','Q','R','S','T','U','V','W','X','Y','Z','A','B','C','D'],
+    ['E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S'],
+    ['T','U','V','W','X','Y','Z','A','B','C','D','E','F','G','H'],
+    ['I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W'],
+    ['X','Y','Z','A','B','C','D','E','F','G','H','I','J','K','L'],
+    ['M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','A'],
+    ['B','C','D','E','F','G','H','I','J','K','L','M','N','O','P'],
+    ['Q','R','S','T','U','V','W','X','Y','Z','A','B','C','D','E'],
+    ['F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T']
+  ];
+
+  const targetWords = ["EVENTOS", "MOTORES", "SENSORES", "BLOQUES", "MBLOCK"];
+  let foundWordsCount = 0;
+
+  // LABERINTO (5x5)
+  const mazeLayout = [
+    [2, 0, 1, 0, 0],
+    [1, 0, 1, 0, 1],
+    [0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 0],
+    [0, 0, 0, 1, 3]
+  ];
+  let userCmds = [];
+
+  window.onload = function() {
+    fetchRanking();
+  };
+
+  function startApp() {
+    studentName = document.getElementById('student-name').value;
+    if(!studentName) {
+      alert("Por favor selecciona tu nombre de la lista de 6to Grado.");
+      return;
+    }
+
+    document.getElementById('disp-name').innerText = studentName;
+    document.getElementById('section-register').classList.add('hidden');
+    document.getElementById('section-game').classList.remove('hidden');
+
+    timerInterval = setInterval(() => {
+      seconds++;
+      let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      let s = (seconds % 60).toString().padStart(2, '0');
+      document.getElementById('timer').innerText = `${m}:${s}`;
+    }, 1000);
+
+    buildWS15();
+    buildMaze();
+  }
+
+  function switchTheme(themeNum) {
+    currentTheme = themeNum;
+    document.querySelectorAll('.nav-tab-btn').forEach((btn, idx) => {
+      btn.classList.toggle('active', idx === (themeNum - 1));
+    });
+
+    document.getElementById('theme-1-container').classList.toggle('hidden', themeNum !== 1);
+    document.getElementById('theme-2-container').classList.toggle('hidden', themeNum !== 2);
+    document.getElementById('theme-3-container').classList.toggle('hidden', themeNum !== 3);
+    document.getElementById('theme-4-container').classList.toggle('hidden', themeNum !== 4);
+  }
+
+  function showT1Activity() {
+    document.getElementById('t1-theory').classList.add('hidden');
+    document.getElementById('t1-activities').classList.remove('hidden');
+  }
+  function showT1Theory() {
+    document.getElementById('t1-activities').classList.add('hidden');
+    document.getElementById('t1-theory').classList.remove('hidden');
+  }
+
+  function showT2Activity() {
+    document.getElementById('t2-theory').classList.add('hidden');
+    document.getElementById('t2-activities').classList.remove('hidden');
+  }
+  function showT2Theory() {
+    document.getElementById('t2-activities').classList.add('hidden');
+    document.getElementById('t2-theory').classList.remove('hidden');
+  }
+
+  function showT3Activity() {
+    document.getElementById('t3-theory').classList.add('hidden');
+    document.getElementById('t3-activities').classList.remove('hidden');
+  }
+  function showT3Theory() {
+    document.getElementById('t3-activities').classList.add('hidden');
+    document.getElementById('t3-theory').classList.remove('hidden');
+  }
+
+  function updateStats() {
+    document.getElementById('score').innerText = score;
+    document.getElementById('attempts').innerText = attempts;
+    document.getElementById('progress-bar').style.width = progress + '%';
+  }
+
+  function optionBtnFail(btn) {
+    attempts++;
+    updateStats();
+    alert("❌ Respuesta incorrecta. Revisa la teoría e inténtalo de nuevo.");
+  }
+
+  function answerQ(theme, qNum, isCorrect) {
+    if(isCorrect) {
+      score += 10;
+      progress += 5;
+      updateStats();
+
+      if(theme === 1) {
+        if(qNum < 5) {
+          document.getElementById(`q${qNum}-container`).classList.add('hidden');
+          document.getElementById(`q${qNum+1}-container`).classList.remove('hidden');
+        } else {
+          document.getElementById('q5-container').classList.add('hidden');
+          document.getElementById('t1-ws-container').classList.remove('hidden');
+        }
+      } else if(theme === 2) {
+        if(qNum < 5) {
+          document.getElementById(`t2-q${qNum}-container`).classList.add('hidden');
+          document.getElementById(`t2-q${qNum+1}-container`).classList.remove('hidden');
+        } else {
+          alert("🎉 ¡Excelente! Has completado las preguntas del Tema 2.");
+          switchTheme(3);
+        }
+      } else if(theme === 3) {
+        if(qNum === 1) {
+          document.getElementById('t3-q1-container').classList.add('hidden');
+          document.getElementById('t3-q2-container').classList.remove('hidden');
+        } else if(qNum === 2) {
+          document.getElementById('t3-q2-container').classList.add('hidden');
+          document.getElementById('t3-q3-container').classList.remove('hidden');
+        } else if(qNum === 5) {
+          alert("🎉 ¡Tema 3 completado! Pasa al Juego Final.");
+          switchTheme(4);
+        }
+      }
+    } else {
+      attempts++;
+      updateStats();
+      let fbId = `fb-t${theme}`;
+      let fb = document.getElementById(fbId);
+      fb.className = "feedback error";
+      fb.innerText = "❌ Incorrecto. Revisa la teoría.";
+    }
+  }
+
+  // SOPA DE LETRAS 15x15
+  function buildWS15() {
+    const container = document.getElementById('ws-grid-15');
+    container.innerHTML = "";
+    gridLetters15.forEach((row, r) => {
+      row.forEach((char, c) => {
+        let cell = document.createElement('div');
+        cell.className = 'ws-cell';
+        cell.innerText = char;
+        cell.onclick = function() { cell.classList.toggle('selected'); };
+        container.appendChild(cell);
+      });
+    });
+  }
+
+  function checkT1WS() {
+    let selected = document.querySelectorAll('#ws-grid-15 .ws-cell.selected');
+    if(selected.length >= 10) {
+      score += 20; progress += 10; updateStats();
+      targetWords.forEach(w => {
+        let badge = document.getElementById(`badge-${w}`);
+        if(badge) badge.classList.add('found');
+      });
+      alert("🎉 ¡Excelente! Encontraste las palabras. Pasando al Tema 2...");
+      switchTheme(2);
+    } else {
+      attempts++; updateStats();
+      alert("❌ Aún te faltan letras por marcar.");
+    }
+  }
+
+  // ALGORITMO TEMA 3
+  function moveUp(btn) {
+    let item = btn.closest('.draggable-item');
+    if(item.previousElementSibling) item.parentNode.insertBefore(item, item.previousElementSibling);
+  }
+
+  function moveDown(btn) {
+    let item = btn.closest('.draggable-item');
+    if(item.nextElementSibling) item.parentNode.insertBefore(item.nextElementSibling, item);
+  }
+
+  function checkAlgoOrder() {
+    let items = document.querySelectorAll('#algo-list .draggable-item');
+    let order = Array.from(items).map(i => i.getAttribute('data-id')).join('');
+    if(order === '123') {
+      score += 15; progress += 5; updateStats();
+      document.getElementById('t3-q3-container').classList.add('hidden');
+      document.getElementById('t3-q4-container').classList.remove('hidden');
+    } else {
+      attempts++; updateStats();
+      alert("❌ El orden del algoritmo es incorrecto.");
+    }
+  }
+
+  function checkMath() {
+    let m1 = parseInt(document.getElementById('m1').value);
+    let m2 = parseInt(document.getElementById('m2').value);
+    let m3 = parseInt(document.getElementById('m3').value);
+
+    if(m1 === 56 && m2 === 54 && m3 === 28) {
+      score += 15; progress += 5; updateStats();
+      document.getElementById('t3-q4-container').classList.add('hidden');
+      document.getElementById('t3-q5-container').classList.remove('hidden');
+    } else {
+      attempts++; updateStats();
+      alert("❌ Revisa los cálculos de las multiplicaciones.");
+    }
+  }
+
+  // JUEGO LABERINTO
+  function buildMaze() {
+    const board = document.getElementById('maze-board');
+    board.innerHTML = "";
+    for(let r=0; r<5; r++) {
+      for(let c=0; c<5; c++) {
+        let cell = document.createElement('div');
+        cell.className = 'maze-cell';
+        if(mazeLayout[r][c] === 1) cell.classList.add('wall');
+        if(mazeLayout[r][c] === 2) cell.innerText = '🤖';
+        if(mazeLayout[r][c] === 3) { cell.classList.add('target'); cell.innerText = '🏁'; }
+        cell.id = `cell-${r}-${c}`;
+        board.appendChild(cell);
+      }
+    }
+  }
+
+  function addCmd(cmd) {
+    userCmds.push(cmd);
+    document.getElementById('cmd-display').innerText = "Inicio -> " + userCmds.join(' -> ');
+  }
+
+  function clearCmd() {
+    userCmds = [];
+    document.getElementById('cmd-display').innerText = "Inicio -> ";
+  }
+
+  function runMaze() {
+    let r = 0, c = 0;
+    let pathValid = true;
+
+    for(let cmd of userCmds) {
+      if(cmd === 'DER') c++;
+      if(cmd === 'ABA') r++;
+      if(cmd === 'IZQ') c--;
+      if(cmd === 'ARR') r--;
+
+      if(r < 0 || r >= 5 || c < 0 || c >= 5 || mazeLayout[r][c] === 1) {
+        pathValid = false;
+        break;
+      }
+    }
+
+    if(pathValid && mazeLayout[r][c] === 3) {
+      score += 30; progress = 100; updateStats();
+      clearInterval(timerInterval);
+
+      document.getElementById('theme-4-container').classList.add('hidden');
+      document.getElementById('nav-tabs-container').classList.add('hidden');
+      document.getElementById('stage-final').classList.remove('hidden');
+      document.getElementById('final-score').innerText = score;
+      document.getElementById('final-time').innerText = document.getElementById('timer').innerText;
+
+      sendDataToSheet();
+    } else {
+      attempts++; updateStats();
+      let fb = document.getElementById('fb-maze');
+      fb.className = "feedback error";
+      fb.innerText = "❌ El robot chocó o no llegó a la meta. Inténtalo de nuevo.";
+      clearCmd();
+    }
+  }
+
+  // GOOGLE SHEETS API
+  function sendDataToSheet() {
+    const payload = {
+      nombre: studentName,
+      perfil: studentProfile,
+      puntos: score,
+      progreso: progress,
+      intentos: attempts,
+      tiempoSeg: seconds,
+      tiempoTexto: document.getElementById('timer').innerText
+    };
+
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(() => {
+      setTimeout(fetchRanking, 1500);
+    });
+  }
+
+  function fetchRanking() {
+    const container = document.getElementById('ranking-container');
+    container.innerHTML = "<li class='ranking-item'>Actualizando...</li>";
+
+    fetch(SCRIPT_URL)
+      .then(res => res.json())
+      .then(data => {
+        container.innerHTML = "";
+        if(!data || data.length === 0) {
+          container.innerHTML = "<li class='ranking-item'>Sin registros aún.</li>";
+          return;
+        }
+
+        data.slice(0, 10).forEach((item, index) => {
+          let li = document.createElement('li');
+          li.className = 'ranking-item';
+          li.innerHTML = `<span><b>#${index+1}</b> ${item.nombre.split(' ')[0]}</span> <span><b>${item.puntos} pts</b> (${item.tiempoTexto})</span>`;
+          container.appendChild(li);
+        });
+      })
+      .catch(() => {
+        container.innerHTML = "<li class='ranking-item'>Conectado a Google Sheets.</li>";
+      });
+  }
+</script>
+
+</body>
+</html>
